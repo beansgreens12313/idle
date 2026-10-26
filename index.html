@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>IDLE</title>
+<meta name="description" content="IDLE turns the free gaps in a high school student's day into quests. Tap through the app.">
+<meta property="og:title" content="IDLE: free time, turned into quests">
+<meta property="og:description" content="Mo lives in your Dynamic Island and wakes up when a gap in your day starts. Tap through the app.">
+<meta property="og:image" content="https://beansgreens12313.github.io/idle/og.jpg">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F7FAFE">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="mo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preload" href="shots/napping.webp" as="image">
+<style>
+  @font-face { font-family: Nunito; font-weight: 400; font-display: swap; src: url(fonts/Nunito_400Regular.woff) format("woff"); }
+  @font-face { font-family: Nunito; font-weight: 700; font-display: swap; src: url(fonts/Nunito_700Bold.woff) format("woff"); }
+  @font-face { font-family: Nunito; font-weight: 900; font-display: swap; src: url(fonts/Nunito_900Black.woff) format("woff"); }
+  /* IDLE's own colors (DESIGN.md) */
+  :root {
+    --bg: #F7FAFE; --ink: #2A3445; --muted: #5E6B80; --blue: #3B7DD8; --deep: #1E4E8C;
+    --tint: #E6F0FB; --gold: #E8B84A; --bezel: #0F1B2D;
+    --phone-h: min(84vh, 860px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: Nunito, -apple-system, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased; overflow: hidden;
+  }
+  body::before {
+    content: ""; position: fixed; width: 70vmax; height: 70vmax; right: -18vmax; top: 18vh;
+    border-radius: 50%; background: var(--tint); z-index: -1;
+  }
+  .app {
+    height: 100dvh; display: grid; grid-template-columns: minmax(320px, 440px) auto;
+    justify-content: center; align-items: center; gap: clamp(32px, 7vw, 110px); padding: 24px 32px;
+  }
+
+  /* left: brand and the step caption */
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand img { width: 74px; height: auto; }
+  .brand h1 { margin: 0; font-size: 64px; font-weight: 900; color: var(--deep); letter-spacing: 0.02em; line-height: 1; }
+  .tagline { margin: 14px 0 0; font-size: 24px; font-weight: 900; line-height: 1.2; }
+  .tagline b { color: var(--blue); }
+  .card {
+    margin-top: 34px; background: #fff; border-radius: 26px; padding: 26px 28px 24px;
+    box-shadow: 0 1px 0 rgba(30, 78, 140, 0.06), 0 14px 34px rgba(30, 78, 140, 0.10);
+  }
+  .count { font-size: 14px; font-weight: 900; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; }
+  .card h2 { margin: 8px 0 8px; font-size: 30px; font-weight: 900; color: var(--deep); line-height: 1.15; }
+  .card p { margin: 0; font-size: 19px; line-height: 1.45; color: var(--ink); min-height: 3em; }
+  .nav { display: flex; align-items: center; gap: 12px; margin-top: 22px; }
+  .btn {
+    font: inherit; font-weight: 900; font-size: 18px; border: 0; cursor: pointer; border-radius: 16px;
+    padding: 14px 22px; transition: transform 0.12s ease, background 0.12s ease;
+  }
+  .btn:active { transform: translateY(2px); }
+  .btn.primary { background: var(--blue); color: #fff; box-shadow: 0 4px 0 var(--deep); flex: 1; }
+  .btn.ghost { background: var(--tint); color: var(--deep); }
+  .btn:disabled { opacity: 0.35; cursor: default; }
+  .btn:focus-visible, .phone:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+  .dots { display: flex; gap: 7px; margin-top: 20px; flex-wrap: wrap; }
+  .dots button {
+    width: 10px; height: 10px; padding: 0; border: 0; border-radius: 5px; background: #CFDDEF; cursor: pointer;
+    transition: width 0.2s ease, background 0.2s ease;
+  }
+  .dots button[aria-current="step"] { width: 28px; background: var(--blue); }
+  .credit { margin-top: 26px; font-size: 14px; line-height: 1.5; color: var(--muted); font-weight: 700; }
+
+  /* right: the phone */
+  .stage { display: flex; align-items: center; justify-content: center; }
+  .phone {
+    position: relative; height: var(--phone-h); aspect-ratio: 1179 / 2556; border-radius: 13% / 6%;
+    border: calc(var(--phone-h) * 0.014) solid var(--bezel); background: var(--bezel); overflow: hidden;
+    box-shadow: 0 30px 70px rgba(30, 78, 140, 0.25); cursor: pointer; user-select: none; -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent; touch-action: pan-y;
+  }
+  .phone > img {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 11% / 5%;
+    opacity: 0; transition: opacity 0.28s ease, transform 0.28s ease; transform: scale(1.015);
+  }
+  .phone > img.on { opacity: 1; transform: none; }
+  .hint {
+    position: absolute; left: 50%; bottom: 13%; transform: translateX(-50%); white-space: nowrap; z-index: 2;
+    background: rgba(15, 27, 45, 0.82); color: #fff; font-weight: 900; font-size: 15px; padding: 10px 16px;
+    border-radius: 20px; pointer-events: none; transition: opacity 0.3s ease; animation: bob 1.6s ease-in-out infinite;
+  }
+  .hint.gone { opacity: 0; }
+  @keyframes bob { 50% { transform: translate(-50%, -6px); } }
+  .end {
+    position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; background: var(--bg); border-radius: 11% / 5%; text-align: center; padding: 0 12%; z-index: 3;
+  }
+  .end.on { display: flex; }
+  .end img { width: 46%; }
+  .end h3 { margin: 6px 0 0; font-size: 34px; font-weight: 900; color: var(--deep); }
+  .end p { margin: 0 0 8px; font-size: 18px; font-weight: 700; color: var(--muted); }
+
+  /* phones: brand on top, the phone in the middle, the caption below */
+  @media (max-width: 820px) {
+    body::before { top: 30vh; }
+    .app {
+      grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr) auto; justify-items: center;
+      gap: 10px; padding: max(12px, env(safe-area-inset-top)) 16px max(12px, env(safe-area-inset-bottom));
+    }
+    .left { display: contents; }
+    .brand { grid-row: 1; }
+    .brand img { width: 40px; }
+    .brand h1 { font-size: 30px; }
+    .tagline, .credit, .dots { display: none; }
+    .stage { grid-row: 2; height: 100%; min-height: 0; }
+    .phone { height: 100%; max-height: 720px; border-width: 7px; }
+    .card { grid-row: 3; margin-top: 0; width: 100%; max-width: 480px; padding: 16px 18px; border-radius: 22px; }
+    .card h2 { font-size: 22px; margin: 4px 0; }
+    .card p { font-size: 16px; min-height: 2.9em; }
+    .nav { margin-top: 12px; }
+    .btn { font-size: 16px; padding: 11px 16px; }
+    .hint { font-size: 13px; padding: 8px 13px; }
+    .end h3 { font-size: 24px; }
+    .end p { font-size: 14px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .phone > img, .dots button, .hint { transition: none; animation: none; }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="left">
+    <div class="brand"><img src="mo.svg" alt=""><h1>IDLE</h1></div>
+    <p class="tagline">Free time, turned into <b>quests</b>.</p>
+    <section class="card" aria-live="polite">
+      <div class="count" id="count">1 of 10</div>
+      <h2 id="title"></h2>
+      <p id="body"></p>
+      <div class="nav">
+        <button class="btn ghost" id="back" aria-label="Previous screen">Back</button>
+        <button class="btn primary" id="next">Next</button>
+      </div>
+      <div class="dots" id="dots" aria-label="Screens"></div>
+    </section>
+    <p class="credit">Made by Jaiden George, Shubh Jain and Sam Tong<br>Congressional App Challenge 2026, Maryland's 3rd District<br>Screens from the IDLE iPhone app</p>
+  </div>
+  <div class="stage">
+    <div class="phone" id="phone" tabindex="0" role="button" aria-label="Tap to go to the next screen">
+      <div class="hint" id="hint">Tap the phone to continue</div>
+      <div class="end" id="end">
+        <img src="mo.svg" alt="Mo">
+        <h3>That's IDLE.</h3>
+        <p>The free gaps in your day, turned into quests.</p>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+  // Each step is one real screen from the app; TABS maps the app's tab bar to the step it opens.
+  const STEPS = [
+    { img: "napping", title: "Mo naps while you're busy",
+      body: "Mo lives in your Dynamic Island. While you're in class or at practice, he sleeps." },
+    { img: "gapAlert", title: "A free gap opens up",
+      body: "The moment a free stretch starts, Mo wakes up and shows how long you have: 25 minutes." },
+    { img: "today", title: "Every gap becomes a quest",
+      body: "IDLE reads your calendar and turns every free stretch of 15 minutes or more into a quest that fits it." },
+    { img: "questFound", title: "One thing that fits",
+      body: "Mo picks a quest for the time you have and your goals: health, school, relationships or learning." },
+    { img: "questTimer", title: "Start the quest",
+      body: "A timer counts down in the app and right in the Dynamic Island." },
+    { img: "questClear", title: "Quest clear!",
+      body: "Every minute is worth 1 XP. This one also earned Sparks and hit the Spanish quiz boss." },
+    { img: "chat", title: "Ask Mo",
+      body: "Chat with Mo about your free time. He knows your calendar, and the chat runs on your phone." },
+    { img: "recap", title: "See your week",
+      body: "Recap shows how much time you took back and how each goal is going." },
+    { img: "goals", title: "Goals and bosses",
+      body: "Weekly targets for each area. Quizzes and tests become bosses you beat with study quests." },
+    { img: "you", title: "Make it yours",
+      body: "Name Mo, pick his color, and dress him up from his closet." },
+  ];
+  const TABS = { today: 2, goals: 8, chat: 6, recap: 7, you: 9 };
+  const HAS_TABS = new Set(Object.keys(TABS));
+
+  const phone = document.getElementById("phone"), end = document.getElementById("end");
+  const hint = document.getElementById("hint"), dots = document.getElementById("dots");
+  const els = { count: document.getElementById("count"), title: document.getElementById("title"),
+                body: document.getElementById("body"), back: document.getElementById("back"),
+                next: document.getElementById("next") };
+
+  const imgs = STEPS.map((s, i) => {
+    const im = new Image();
+    im.src = `shots/${s.img}.webp`;
+    im.alt = s.title;
+    im.draggable = false;
+    phone.insertBefore(im, hint);
+    const d = document.createElement("button");
+    d.setAttribute("aria-label", `Screen ${i + 1}: ${s.title}`);
+    d.addEventListener("click", () => go(i));
+    dots.appendChild(d);
+    return im;
+  });
+
+  let at = 0, done = false, touched = false;
+  function dismissHint() { if (!touched) { touched = true; hint.classList.add("gone"); } }
+  function go(i) {
+    done = false;
+    at = Math.max(0, Math.min(STEPS.length - 1, i));
+    const s = STEPS[at];
+    imgs.forEach((im, j) => im.classList.toggle("on", j === at));
+    [...dots.children].forEach((d, j) => (j === at ? d.setAttribute("aria-current", "step") : d.removeAttribute("aria-current")));
+    end.classList.remove("on");
+    els.count.textContent = `${at + 1} of ${STEPS.length}`;
+    els.title.textContent = s.title;
+    els.body.textContent = s.body;
+    els.back.disabled = at === 0;
+    els.next.textContent = at === STEPS.length - 1 ? "Finish" : "Next";
+  }
+  function next() {
+    dismissHint();
+    if (done) return go(0);
+    if (at < STEPS.length - 1) return go(at + 1);
+    done = true;
+    end.classList.add("on");
+    els.count.textContent = "Done";
+    els.title.textContent = "That's IDLE.";
+    els.body.textContent = "Every screen here is from the real app.";
+    els.next.textContent = "Start over";
+  }
+  function back() { done ? go(STEPS.length - 1) : go(at - 1); }
+
+  phone.addEventListener("click", (e) => {
+    // Tapping the tab bar opens that tab, like the app does.
+    const r = phone.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+    if (!done && y > 0.91 && HAS_TABS.has(STEPS[at].img)) {
+      dismissHint();
+      go(TABS[x < 0.21 ? "today" : x < 0.40 ? "goals" : x < 0.60 ? "chat" : x < 0.79 ? "recap" : "you"]);
+      return;
+    }
+    next();
+  });
+  phone.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); next(); } });
+  els.next.addEventListener("click", next);
+  els.back.addEventListener("click", back);
+  document.addEventListener("keydown", (e) => {
+    if (e.target.closest && e.target.closest("button")) return;
+    if (e.key === "ArrowRight") next();
+    if (e.key === "ArrowLeft") back();
+  });
+  let sx = null;
+  phone.addEventListener("touchstart", (e) => { sx = e.touches[0].clientX; }, { passive: true });
+  phone.addEventListener("touchend", (e) => {
+    if (sx === null) return;
+    const dx = e.changedTouches[0].clientX - sx;
+    sx = null;
+    if (Math.abs(dx) > 50) { e.preventDefault(); dx < 0 ? next() : back(); }
+  });
+  go(0);
+</script>
+</body>
+</html>

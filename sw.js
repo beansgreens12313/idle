@@ -1,5 +1,5 @@
 // Keeps IDLE's preview instant and working offline. Bump CACHE when any file changes.
-const CACHE = "idle-v3";
+const CACHE = "idle-v4";
 const FILES = [
   "./", "index.html", "manifest.webmanifest", "mo.svg", "og.jpg", "icon-192.png", "icon-512.png", "apple-touch-icon.png",
   "fonts/Nunito_400Regular.woff", "fonts/Nunito_700Bold.woff", "fonts/Nunito_900Black.woff",
@@ -8,7 +8,7 @@ const FILES = [
 ];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES.map((u) => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (e) => {
@@ -26,11 +26,13 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(
       fetch(e.request)
         .then((r) => {
-          const copy = r.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
+          if (r.ok) {
+            const copy = r.clone();
+            caches.open(CACHE).then((c) => c.put("index.html", copy));
+          }
           return r;
         })
-        .catch(() => caches.match(e.request).then((r) => r || caches.match("index.html")))
+        .catch(() => caches.match("index.html"))
     );
     return;
   }
